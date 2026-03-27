@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CTCMarket — CTC RTO Day DHCP Leases</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --card: #161b22;
+      --border: #21262d;
+      --green: #00c076;
+      --red: #f6465d;
+      --blue: #3b82f6;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --accent: #1d6ff3;
+      --badge: #1e3a5f;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* NAV */
+    nav {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--text);
+      text-decoration: none;
+    }
+    .nav-logo span.poly { color: var(--accent); }
+    .nav-links { display: flex; gap: 20px; align-items: center; }
+    .nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.88rem;
+      transition: color .2s;
+    }
+    .nav-links a:hover { color: var(--text); }
+    .nav-btn {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 14px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    /* HERO / MARKET HEADER */
+    .market-header {
+      max-width: 900px;
+      margin: 36px auto 0;
+      padding: 0 20px;
+    }
+    .category-badge {
+      display: inline-block;
+      background: var(--badge);
+      color: var(--accent);
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 20px;
+      margin-bottom: 12px;
+      letter-spacing: .5px;
+      text-transform: uppercase;
+    }
+    .market-title {
+      font-size: 1.75rem;
+      font-weight: 700;
+      line-height: 1.3;
+      margin-bottom: 10px;
+    }
+    .market-meta {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+      flex-wrap: wrap;
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-bottom: 24px;
+    }
+    .market-meta span { display: flex; align-items: center; gap: 5px; }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); display: inline-block; }
+
+    /* STATS ROW */
+    .stats-row {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 28px;
+    }
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 20px;
+      flex: 1;
+      min-width: 140px;
+    }
+    .stat-label { font-size: 0.75rem; color: var(--muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: .4px; }
+    .stat-value { font-size: 1.4rem; font-weight: 700; }
+    .stat-value.green { color: var(--green); }
+    .stat-value.blue { color: var(--accent); }
+    .stat-value.yellow { color: #f9c74f; }
+
+    /* MAIN LAYOUT */
+    .market-body {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 20px 60px;
+      display: grid;
+      grid-template-columns: 1fr 310px;
+      gap: 24px;
+    }
+    @media (max-width: 680px) {
+      .market-body { grid-template-columns: 1fr; }
+    }
+
+    /* PREDICTIONS TABLE */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .card-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.9rem;
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .card-header .subtitle { font-size: 0.75rem; color: var(--muted); font-weight: 400; }
+
+    table { width: 100%; border-collapse: collapse; }
+    th {
+      padding: 10px 16px;
+      text-align: left;
+      font-size: 0.75rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .4px;
+      border-bottom: 1px solid var(--border);
+    }
+    td {
+      padding: 13px 16px;
+      font-size: 0.88rem;
+      border-bottom: 1px solid var(--border);
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255,255,255,0.03); }
+
+    .avatar {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.75rem;
+      color: #fff;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+    .name-cell { display: flex; align-items: center; }
+    .you-badge {
+      background: #1d4ed8;
+      color: #bfdbfe;
+      font-size: 0.65rem;
+      padding: 1px 6px;
+      border-radius: 10px;
+      margin-left: 6px;
+      font-weight: 600;
+    }
+
+    .bar-wrap { width: 100%; background: var(--border); border-radius: 4px; height: 6px; margin-top: 4px; }
+    .bar-fill { height: 6px; border-radius: 4px; background: var(--accent); }
+
+    .change-up { color: var(--green); font-size: 0.78rem; }
+    .change-dn { color: var(--red); font-size: 0.78rem; }
+
+    /* SIDEBAR */
+    .sidebar { display: flex; flex-direction: column; gap: 18px; }
+
+    /* COUNTDOWN */
+    .countdown-card {
+      background: linear-gradient(135deg, #0f2136 0%, #0d1117 100%);
+      border: 1px solid #1d4ed8;
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+    }
+    .countdown-title { font-size: 0.8rem; color: #93c5fd; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 14px; }
+    .countdown-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    .countdown-unit { background: rgba(255,255,255,0.06); border-radius: 8px; padding: 10px 4px; }
+    .countdown-num { font-size: 1.5rem; font-weight: 700; color: #fff; }
+    .countdown-lbl { font-size: 0.65rem; color: var(--muted); text-transform: uppercase; margin-top: 2px; }
+
+    /* PLACE BET (fake) */
+    .bet-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+    .bet-title { font-size: 0.88rem; font-weight: 600; margin-bottom: 14px; }
+    .bet-subtitle { font-size: 0.75rem; color: var(--muted); margin-bottom: 14px; }
+    .bet-input {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      padding: 10px 12px;
+      font-size: 0.9rem;
+      margin-bottom: 10px;
+      outline: none;
+    }
+    .bet-input:focus { border-color: var(--accent); }
+    .bet-btn {
+      width: 100%;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 11px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .2s;
+    }
+    .bet-btn:hover { background: #2563eb; }
+    .bet-note { font-size: 0.72rem; color: var(--muted); text-align: center; margin-top: 8px; }
+
+    /* ACTIVITY FEED */
+    .feed-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.82rem;
+    }
+    .feed-item:last-child { border-bottom: none; }
+    .feed-avatar {
+      width: 26px; height: 26px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.7rem;
+      color: #fff;
+      flex-shrink: 0;
+    }
+    .feed-text { color: var(--muted); line-height: 1.4; }
+    .feed-text strong { color: var(--text); }
+    .feed-time { font-size: 0.72rem; color: #4a5568; margin-top: 2px; }
+
+    /* PROGRESS BAR (current vs record) */
+    .progress-section { padding: 18px 20px; }
+    .progress-label { display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 8px; }
+    .progress-outer { background: var(--border); border-radius: 8px; height: 12px; overflow: hidden; }
+    .progress-inner { height: 12px; border-radius: 8px; background: linear-gradient(90deg, #1d6ff3, #00c076); }
+    .progress-ticks { display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--muted); margin-top: 6px; }
+
+    /* RESOLUTION NOTE */
+    .resolution {
+      background: rgba(0,192,118,0.08);
+      border: 1px solid rgba(0,192,118,0.25);
+      border-radius: 10px;
+      padding: 14px 16px;
+      font-size: 0.82rem;
+      line-height: 1.6;
+      color: #a7f3d0;
+    }
+    .resolution strong { color: var(--green); }
+
+    footer {
+      text-align: center;
+      padding: 20px;
+      font-size: 0.75rem;
+      color: #374151;
+      border-top: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a class="nav-logo" href="#">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><polygon points="12,2 22,7 22,17 12,22 2,17 2,7" fill="#1d6ff3" opacity=".9"/><text x="7" y="16" font-size="10" font-weight="bold" fill="white">C</text></svg>
+    <span><span class="poly">CTC</span>Market</span>
+  </a>
+  <div class="nav-links">
+    <a href="#">Markets</a>
+    <a href="#">Leaderboard</a>
+    <a href="#">Activity</a>
+    <button class="nav-btn">Sign In</button>
+  </div>
+</nav>
+
+<!-- MARKET HEADER -->
+<div class="market-header">
+  <div class="category-badge">🏢 IT Infrastructure</div>
+  <div class="market-title">How many wireless DHCP leases will the CTC building peak at on RTO Day — Wednesday, April 1, 2026?</div>
+  <div class="market-meta">
+    <span><span class="dot"></span> Active Market</span>
+    <span>📅 Resolves Apr 1, 2026</span>
+    <span>🛰️ Source: 10.70.128.0 DHCP Scope</span>
+    <span>👥 4 predictors</span>
+  </div>
+
+  <!-- STATS ROW -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">Current Record</div>
+      <div class="stat-value blue">6,000</div>
+      <div style="font-size:0.75rem;color:var(--muted);margin-top:3px;">leases (pre-RTO high)</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Group Avg Prediction</div>
+      <div class="stat-value yellow">10,162</div>
+      <div style="font-size:0.75rem;color:var(--muted);margin-top:3px;">DHCP leases</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Highest Prediction</div>
+      <div class="stat-value green">11,500</div>
+      <div style="font-size:0.75rem;color:var(--muted);margin-top:3px;">Frank (max bull)</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Days Until RTO</div>
+      <div class="stat-value" id="days-left" style="color:#f9c74f;">—</div>
+      <div style="font-size:0.75rem;color:var(--muted);margin-top:3px;">April 1, 2026</div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN BODY -->
+<div class="market-body">
+
+  <!-- LEFT: PREDICTIONS TABLE -->
+  <div>
+    <div class="card" style="margin-bottom:20px;">
+      <div class="card-header">
+        📊 Predictions
+        <span class="subtitle">Ranked by lease count</span>
+      </div>
+
+      <!-- PROGRESS vs record -->
+      <div class="progress-section">
+        <div class="progress-label">
+          <span style="font-size:0.78rem;color:var(--muted);">Current record: <strong style="color:var(--text)">6,000</strong></span>
+          <span style="font-size:0.78rem;color:var(--muted);">Frank's ceiling: <strong style="color:var(--text)">11,500</strong></span>
+        </div>
+        <div class="progress-outer">
+          <div class="progress-inner" style="width: 52.2%"></div>
+        </div>
+        <div class="progress-ticks">
+          <span>0</span><span>2,875</span><span>5,750</span><span>8,625</span><span>11,500</span>
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Predictor</th>
+            <th>Prediction</th>
+            <th>vs Record</th>
+            <th>Share of Range</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="color:var(--muted);font-weight:700;">1</td>
+            <td>
+              <div class="name-cell">
+                <span class="avatar" style="background:#7c3aed;">F</span>
+                Frank
+              </div>
+            </td>
+            <td style="font-weight:700;color:var(--green);">11,500</td>
+            <td><span class="change-up">▲ +91.7%</span></td>
+            <td>
+              <div style="font-size:0.78rem;color:var(--muted);">100%</div>
+              <div class="bar-wrap"><div class="bar-fill" style="width:100%;background:#7c3aed;"></div></div>
+            </td>
+          </tr>
+          <tr>
+            <td style="color:var(--muted);font-weight:700;">2</td>
+            <td>
+              <div class="name-cell">
+                <span class="avatar" style="background:#0891b2;">M</span>
+                Matt
+              </div>
+            </td>
+            <td style="font-weight:700;color:var(--green);">10,500</td>
+            <td><span class="change-up">▲ +75.0%</span></td>
+            <td>
+              <div style="font-size:0.78rem;color:var(--muted);">91%</div>
+              <div class="bar-wrap"><div class="bar-fill" style="width:91%;background:#0891b2;"></div></div>
+            </td>
+          </tr>
+          <tr>
+            <td style="color:var(--muted);font-weight:700;">3</td>
+            <td>
+              <div class="name-cell">
+                <span class="avatar" style="background:#d97706;">C</span>
+                Chad
+              </div>
+            </td>
+            <td style="font-weight:700;">9,650</td>
+            <td><span class="change-up">▲ +60.8%</span></td>
+            <td>
+              <div style="font-size:0.78rem;color:var(--muted);">84%</div>
+              <div class="bar-wrap"><div class="bar-fill" style="width:84%;background:#d97706;"></div></div>
+            </td>
+          </tr>
+          <tr>
+            <td style="color:var(--muted);font-weight:700;">4</td>
+            <td>
+              <div class="name-cell">
+                <span class="avatar" style="background:#be123c;">P</span>
+                Predrag
+              </div>
+            </td>
+            <td style="font-weight:700;color:var(--muted);">8,999</td>
+            <td><span class="change-up">▲ +50.0%</span></td>
+            <td>
+              <div style="font-size:0.78rem;color:var(--muted);">78%</div>
+              <div class="bar-wrap"><div class="bar-fill" style="width:78%;background:#be123c;"></div></div>
+            </td>
+          </tr>
+
+          <!-- fake entries for flavor -->
+          <tr style="opacity:0.45;">
+            <td style="color:var(--muted);font-weight:700;">5</td>
+            <td>
+              <div class="name-cell">
+                <span class="avatar" style="background:#374151;">?</span>
+                <span style="color:var(--muted);font-style:italic;">Anonymous</span>
+              </div>
+            </td>
+            <td style="font-weight:700;color:var(--muted);">7,200</td>
+            <td><span class="change-up">▲ +20.0%</span></td>
+            <td>
+              <div style="font-size:0.78rem;color:var(--muted);">63%</div>
+              <div class="bar-wrap"><div class="bar-fill" style="width:63%;background:#374151;"></div></div>
+            </td>
+          </tr>
+          <tr style="opacity:0.45;">
+            <td style="color:var(--muted);font-weight:700;">6</td>
+            <td>
+              <div class="name-cell">
+                <span class="avatar" style="background:#374151;">?</span>
+                <span style="color:var(--muted);font-style:italic;">Pessimist Pete</span>
+              </div>
+            </td>
+            <td style="font-weight:700;color:var(--red);">6,100</td>
+            <td><span class="change-up">▲ +1.7%</span></td>
+            <td>
+              <div style="font-size:0.78rem;color:var(--muted);">53%</div>
+              <div class="bar-wrap"><div class="bar-fill" style="width:53%;background:#374151;"></div></div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- RESOLUTION CRITERIA -->
+    <div class="resolution">
+      <strong>📋 Resolution Criteria</strong><br/>
+      This market resolves based on the <strong>peak concurrent DHCP lease count</strong> observed on the <strong>10.70.128.0/255</strong> wireless scope during the business day of <strong>Wednesday, April 1, 2026</strong> — the first official CTC Return-to-Office mandate date. The predictor whose value is closest to the actual peak count (without going over) wins bragging rights. 🏆
+    </div>
+  </div>
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+
+    <!-- COUNTDOWN -->
+    <div class="countdown-card">
+      <div class="countdown-title">⏱ Time Until RTO Day</div>
+      <div class="countdown-grid">
+        <div class="countdown-unit">
+          <div class="countdown-num" id="cd-days">—</div>
+          <div class="countdown-lbl">Days</div>
+        </div>
+        <div class="countdown-unit">
+          <div class="countdown-num" id="cd-hrs">—</div>
+          <div class="countdown-lbl">Hours</div>
+        </div>
+        <div class="countdown-unit">
+          <div class="countdown-num" id="cd-min">—</div>
+          <div class="countdown-lbl">Mins</div>
+        </div>
+        <div class="countdown-unit">
+          <div class="countdown-num" id="cd-sec">—</div>
+          <div class="countdown-lbl">Secs</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FAKE BET CARD -->
+    <div class="bet-card">
+      <div class="bet-title">🔮 Submit Your Prediction</div>
+      <div class="bet-subtitle">Enter the max DHCP lease count you expect on April 1st.</div>
+      <input class="bet-input" type="number" placeholder="e.g. 9,500" min="0" max="20000"/>
+      <input class="bet-input" type="text" placeholder="Your name"/>
+      <button class="bet-btn" onclick="alert('😂 This market is closed! Talk to Predrag, Chad, Matt, or Frank.')">Lock It In</button>
+      <div class="bet-note">Market closed · Predictions locked in · No refunds on pride 😅</div>
+    </div>
+
+    <!-- ACTIVITY FEED -->
+    <div class="card">
+      <div class="card-header">🔔 Recent Activity</div>
+      <div class="feed-item">
+        <div class="feed-avatar" style="background:#7c3aed;">F</div>
+        <div>
+          <div class="feed-text"><strong>Frank</strong> predicted <strong style="color:var(--green);">11,500 leases</strong> — "Every single person is coming back. Plus their personal phones, tablets, AND laptops."</div>
+          <div class="feed-time">2 days ago</div>
+        </div>
+      </div>
+      <div class="feed-item">
+        <div class="feed-avatar" style="background:#0891b2;">M</div>
+        <div>
+          <div class="feed-text"><strong>Matt</strong> predicted <strong style="color:var(--green);">10,500 leases</strong> — "Don't forget the IoT devices people sneak in."</div>
+          <div class="feed-time">3 days ago</div>
+        </div>
+      </div>
+      <div class="feed-item">
+        <div class="feed-avatar" style="background:#d97706;">C</div>
+        <div>
+          <div class="feed-text"><strong>Chad</strong> predicted <strong>9,650 leases</strong> — "Half will VPN from the parking lot anyway."</div>
+          <div class="feed-time">4 days ago</div>
+        </div>
+      </div>
+      <div class="feed-item">
+        <div class="feed-avatar" style="background:#be123c;">P</div>
+        <div>
+          <div class="feed-text"><strong>Predrag</strong> predicted <strong style="color:var(--muted);">8,999 leases</strong> — "I'm being conservative. Network will buckle at 9k."</div>
+          <div class="feed-time">5 days ago</div>
+        </div>
+      </div>
+      <div class="feed-item">
+        <div class="feed-avatar" style="background:#374151;">S</div>
+        <div>
+          <div class="feed-text"><strong>System</strong> — All-time DHCP record of <strong style="color:var(--accent);">6,000 leases</strong> confirmed as baseline.</div>
+          <div class="feed-time">6 days ago</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<footer>CTCMarket · For entertainment purposes only · Not affiliated with Polymarket · 🌐 Powered by DHCP and misery</footer>
+
+<script>
+  // Countdown to April 1, 2026 9:00 AM
+  function updateCountdown() {
+    const target = new Date('2026-04-01T09:00:00');
+    const now = new Date();
+    const diff = target - now;
+    if (diff <= 0) {
+      document.getElementById('cd-days').textContent = '0';
+      document.getElementById('cd-hrs').textContent = '00';
+      document.getElementById('cd-min').textContent = '00';
+      document.getElementById('cd-sec').textContent = '00';
+      document.getElementById('days-left').textContent = '🚨 IT\'S TODAY';
+      return;
+    }
+    const d = Math.floor(diff / 86400000);
+    const h = Math.floor((diff % 86400000) / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    const s = Math.floor((diff % 60000) / 1000);
+    document.getElementById('cd-days').textContent = d;
+    document.getElementById('cd-hrs').textContent = String(h).padStart(2,'0');
+    document.getElementById('cd-min').textContent = String(m).padStart(2,'0');
+    document.getElementById('cd-sec').textContent = String(s).padStart(2,'0');
+    document.getElementById('days-left').textContent = d + (d === 1 ? ' day' : ' days');
+  }
+  updateCountdown();
+  setInterval(updateCountdown, 1000);
+</script>
+
+</body>
+</html>
